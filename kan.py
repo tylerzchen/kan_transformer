@@ -29,6 +29,24 @@ class RationalFunction(nn.Module):
 
         # Return R(x) = P(x) / Q(x)
         return p / q
+        
+class TaylorFunction(nn.Module):
+    """rational activation function"""
+    
+    def __init__(self, degree_p=5):
+        """
+        Args:
+            degree_p (int): Degree of the numerator polynomial.
+        """
+        super().__init__()
+        self.degree_p = degree_p
+
+        self.a = nn.Parameter(torch.randn(degree_p + 1))  # P(x) coefficients
+
+    def forward(self, x):
+        """Forward pass of the rational function."""
+        p = sum(self.a[i] * x**i for i in range(self.degree_p + 1))
+        return p 
 
 
 class KAN(nn.Module):
@@ -42,6 +60,7 @@ class KAN(nn.Module):
         act_cfg=dict(type="Rational", degree_p=5, degree_q=4),
         bias=True,
         drop=0.0,
+        taylor = False
     ):
         """
         Args:
@@ -59,11 +78,6 @@ class KAN(nn.Module):
         # First fully connected layer
         self.fc1 = nn.Linear(in_features, hidden_features, bias=bias)
 
-        # First rational activation function
-        self.act1 = RationalFunction(
-            degree_p=act_cfg.get("degree_p", 5),
-            degree_q=act_cfg.get("degree_q", 4)
-        )
 
         # Dropout after first rational activation
         self.drop1 = nn.Dropout(drop)
@@ -72,10 +86,22 @@ class KAN(nn.Module):
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)
 
         # Second rational activation function
-        self.act2 = RationalFunction(
-            degree_p=act_cfg.get("degree_p", 5),
-            degree_q=act_cfg.get("degree_q", 4)
-        )
+        if not taylor:
+            self.act1 = RationalFunction(
+                degree_p=act_cfg.get("degree_p", 5),
+                degree_q=act_cfg.get("degree_q", 4)
+            )
+            self.act2 = RationalFunction(
+                degree_p=act_cfg.get("degree_p", 5),
+                degree_q=act_cfg.get("degree_q", 4)
+            )  
+        if taylor:
+            self.act1 = TaylorFunction(
+                degree_p=act_cfg.get("degree_p", 6)
+            )
+            self.act2 = TaylorFunction(
+                degree_p=act_cfg.get("degree_p", 6)
+            ) 
 
         # Dropout after second rational activation
         self.drop2 = nn.Dropout(drop)
