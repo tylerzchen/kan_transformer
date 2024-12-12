@@ -50,7 +50,7 @@ class TaylorFunction(nn.Module):
 
 
 class KAN(nn.Module):
-    """Kolmogorov-Arnold Neural Network with Rational Base Functions."""
+    """Kolmogorov-Arnold Neural Network with Rational or Taylor Polynomial Base Functions."""
 
     def __init__(
         self,
